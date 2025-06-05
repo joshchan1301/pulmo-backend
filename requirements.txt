@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-dotenv
+httpx
+gdown
+torch
+numpy
+pillow
+opencv-python
+timm
+torchvision
