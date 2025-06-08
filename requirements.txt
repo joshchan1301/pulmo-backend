@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 scikit-image
-lung-segmentation
 python-dotenv
 httpx
 gdown
