@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+scikit-image
 python-dotenv
 httpx
 gdown
