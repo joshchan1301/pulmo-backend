@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 scikit-image
+segmentation-models-pytorch
 python-dotenv
 httpx
 gdown
