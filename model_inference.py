@@ -88,14 +88,20 @@ def gradcam_heatmap(model, img_tensor):
     return cam, pred_idx, pred_prob
 
 def overlay_heatmap(img_np, cam, alpha=0.40, lung_mask=None):
-    # Optionally, filter cam by mask phổi nếu có
     if lung_mask is not None:
         cam = cam * lung_mask
         cam = (cam - cam.min()) / (cam.max() + 1e-8)
+    # Đảm bảo img_np là float32 [0,1]
+    if img_np.dtype != np.float32:
+        img_np = img_np.astype(np.float32)
+    if img_np.max() > 1.0:
+        img_np /= 255.0
+    # Heatmap cũng float32 [0,1]
     heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
-    heatmap = np.float32(heatmap) / 255
-    overlay = cv2.addWeighted(img_np, 1-alpha, heatmap, alpha, 0)
-    overlay_img = (overlay * 255).astype(np.uint8)
+    heatmap = heatmap.astype(np.float32) / 255.0
+    # Overlay
+    overlay = cv2.addWeighted(img_np, 1 - alpha, heatmap, alpha, 0)
+    overlay_img = np.clip(overlay * 255, 0, 255).astype(np.uint8)
     return overlay_img
 
 def analyze_xray(image_bytes: bytes, lung_mask=None):
