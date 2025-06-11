@@ -35,7 +35,7 @@ app = FastAPI(
 # CORS: Cho phép FE gọi API từ domain khác
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Khi production nhớ sửa lại domain!
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
