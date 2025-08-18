@@ -1,22 +1,22 @@
 # 🫁 Pulmo Vision – Chest X-ray AI Analysis
 
-**Pulmo Vision** là một dự án AI áp dụng **Swin Transformer** để phân tích ảnh X-ray phổi, hỗ trợ phát hiện một số tình trạng:
+**Pulmo Vision** is an AI project that applies the **Swin Transformer** to analyze chest X-ray images, supporting the detection of several conditions:
 
 - **BACTERIAL Pneumonia**
 - **VIRAL Pneumonia**
 - **NORMAL (healthy)**
 
-Ngoài ra, hệ thống còn sinh ra **Grad-CAM heatmap** để giải thích quyết định của mô hình, giúp người dùng hiểu rõ hơn vùng phổi nào ảnh hưởng đến chẩn đoán.
+Additionally, the system generates **Grad-CAM heatmaps** to explain the model’s decision, helping users understand which lung regions contribute to the diagnosis.
 
 ---
 
 ## 🚀 Features
 
-- 📷 **Upload ảnh X-ray** → model phân tích và trả về nhãn, xác suất.
-- 🔥 **Grad-CAM visualization** → hiển thị vùng phổi quan trọng mà mô hình tập trung.
-- 🧠 **Swin Transformer backbone** → state-of-the-art cho computer vision.
-- 🌐 **FastAPI backend** → dễ deploy (Vercel, Render, Railway…).
-- 🤖 **Chatbot tích hợp GPT** (API OpenAI) → giải thích kết quả bằng tiếng Việt thân thiện.
+- 📷 **Upload X-ray images** → the model analyzes and returns predicted label and probability.
+- 🔥 **Grad-CAM visualization** → highlights the lung regions the model focuses on.
+- 🧠 **Swin Transformer backbone** → state-of-the-art computer vision architecture.
+- 🌐 **FastAPI backend** → easy to deploy (Vercel, Render, Railway…).
+- 🤖 **GPT-powered chatbot** (OpenAI API) → explains results in a user-friendly way.
 
 ---
 
@@ -24,11 +24,11 @@ Ngoài ra, hệ thống còn sinh ra **Grad-CAM heatmap** để giải thích qu
 
 ```
 pulmo-backend/
-│── main.py              # FastAPI server (API routes)
-│── model_inference.py   # Model loading, preprocessing, Grad-CAM
-│── requirements.txt     # Dependencies
-│── .env.example         # API keys & config
-│── swin_best_model.pth  # Model checkpoint
+│── main.py # FastAPI server (API routes)
+│── model_inference.py # Model loading, preprocessing, Grad-CAM
+│── requirements.txt # Dependencies
+│── .env.example # API keys & config
+│── swin_best_model.pth # Model checkpoint
 ```
 
 ---
@@ -42,24 +42,24 @@ git clone https://github.com/joshchan1301/pulmo-backend.git
 cd pulmo-backend
 ```
 
-2. Cài đặt dependencies:
+2. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Tạo file `.env`:
+3. Create `.env` file:
 
 ```env
 OPENAI_API_KEY=sk-xxxxxxx
 ```
 
-4. Tải model checkpoint (Swin Transformer):
-   - Link Google Drive (đang sử dụng):
+4. Download pretrained model (Swin Transformer):
+   - Google Drive link:
      ```
      https://drive.google.com/uc?export=download&id=1VD2pXT9aDHmGwn2KiD3aSoXj5nBglVLw
      ```
-   - Lưu với tên `swin_best_model.pth` trong thư mục project.
+   - Save as swin_best_model.pth in the project folder.
 
 ---
 
@@ -98,14 +98,14 @@ API docs (Swagger UI):
 - **Input JSON:**
 
 ```json
-{ "message": "Ảnh X-ray của tôi có ý nghĩa gì?" }
+{ "message": "What does my X-ray mean?" }
 ```
 
 - **Output JSON:**
 
 ```json
 {
-  "reply": "Ảnh X-ray cho thấy dấu hiệu viêm phổi do vi khuẩn, vùng màu đỏ là nơi mô hình tập trung nhiều nhất."
+  "reply": "The X-ray indicates signs of bacterial pneumonia. The red highlighted areas are where the model focused most."
 }
 ```
 
@@ -128,10 +128,10 @@ Do your own =)))
 
 ## ⚠️ Disclaimer
 
-- Đây **không phải công cụ y tế chính thức**.
-- Chỉ dùng cho mục đích **học tập và nghiên cứu AI**.
-- Không thay thế chẩn đoán của bác sĩ.
+- This is **not a certified medical tool**.
+- For **educational and research purposes only**.
+- Not a substitute for professional medical diagnosis.
 
 ---
 
-✍️ Author: [Trần Hiếu](https://github.com/joshchan1301)
+✍️ Author: [Tran Hieu](https://github.com/joshchan1301)
