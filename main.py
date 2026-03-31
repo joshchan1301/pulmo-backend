@@ -1,38 +1,46 @@
 import os
+import torch
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import httpx
-import gdown
+from huggingface_hub import hf_hub_download
 
-from model_inference import analyze_xray  # Import hàm phân tích ảnh
+from model_inference import analyze_xray
 
 # Load biến môi trường
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-
+# Tối ưu hóa việc tải model từ Hugging Face
 def download_model():
-    model_url = "https://drive.google.com/uc?export=download&id=1VD2pXT9aDHmGwn2KiD3aSoXj5nBglVLw"
-    model_path = "swin_best_model.pth"
-    if not os.path.exists(model_path):
-        print("Downloading model from Google Drive with gdown...")
-        gdown.download(model_url, model_path, quiet=False)
-        print("Model downloaded!")
+    # Thay thế repo_id và filename bằng thông tin thực tế của bạn trên HF
+    # Nếu chưa có, bạn nên tạo 1 repo public trên HF và upload file .pth lên
+    REPO_ID = "joshchan1301/x-ray_img_analysis_ai" 
+    FILENAME = "swin_best_model.pth"
+    MODEL_PATH = "swin_best_model.pth"
+    
+    if not os.path.exists(MODEL_PATH):
+        print(f"Đang tải model từ Hugging Face: {REPO_ID}...")
+        try:
+            # Nếu dùng Google Drive link cũ, bạn vẫn có thể dùng gdown nhưng HF ổn định hơn
+            # Ở đây tôi hướng dẫn dùng hf_hub_download
+            path = hf_hub_download(repo_id=REPO_ID, filename=FILENAME, local_dir=".")
+            print(f"Model đã được tải về tại: {path}")
+        except Exception as e:
+            print(f"Lỗi khi tải model từ HF: {e}")
 
+# Gọi hàm tải model (tùy chọn nếu bạn đã cấu hình HF)
+# download_model()
 
-download_model()
-
-# Khởi tạo FastAPI
 app = FastAPI(
     title="Pulmo Vision API",
-    description="API for Lung X-ray Analysis and Pulmo AI Chatbot",
-    version="1.0.0"
+    description="API phân tích X-quang phổi và Chatbot Pulmo AI",
+    version="1.1.0"
 )
 
-# CORS: Cho phép FE gọi API từ domain khác
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -41,41 +49,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ========== API PHÂN TÍCH X-RAY ==========
-
-
 @app.post("/api/analyze-xray", tags=["X-ray Analysis"])
 async def analyze_xray_api(file: UploadFile = File(...)):
-    """
-    Nhận file ảnh X-ray, trả về nhãn dự đoán, xác suất và ảnh Grad-CAM (base64).
-    """
     try:
         img_bytes = await file.read()
+        # Giải phóng dung lượng file sau khi đọc
         result = analyze_xray(img_bytes)
         return JSONResponse(content=result)
     except Exception as e:
-        print("X-ray Analysis Error:", str(e))
         return JSONResponse(
             status_code=500,
-            content={"error": "Internal Server Error: " + str(e)}
+            content={"error": f"Lỗi máy chủ: {str(e)}"}
         )
-
-# ========== API CHATBOT ==========
-
 
 class ChatRequest(BaseModel):
     message: str
 
-
 @app.post("/api/chat", tags=["Chatbot"])
 async def chat_with_openai(req: ChatRequest):
-    """
-    Nhận tin nhắn từ user, gửi lên OpenAI ChatGPT và trả về phản hồi.
-    """
     if not OPENAI_API_KEY:
-        return {"reply": "Lỗi: Thiếu OPENAI_API_KEY trong môi trường server."}
+        return {"reply": "Lỗi: Thiếu API Key cho Chatbot."}
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
@@ -87,30 +82,16 @@ async def chat_with_openai(req: ChatRequest):
                     "messages": [
                         {
                             "role": "system",
-                            "content": (
-                                "Lưu ý không trả lời quá 300 tokens."
-
-                                "Bạn là Pulmo AI Assistant, hãy trả lời các câu hỏi về X-ray phổi, sức khỏe phổi, các bệnh lý liên quan, "
-                                "và giải thích kết quả chẩn đoán AI một cách thân thiện, dễ hiểu cho người dùng Việt Nam. "
-                                "Nếu có ai đó hỏi bạn bằng tiếng Anh thì hãy trả lời họ bằng tiếng Anh."
-
-                            )
+                            "content": "Bạn là Pulmo AI, chuyên gia hỗ trợ sức khỏe phổi. Trả lời ngắn gọn, thân thiện."
                         },
-                        {
-                            "role": "user",
-                            "content": req.message
-                        }
+                        {"role": "user", "content": req.message}
                     ],
-                    "max_tokens": 300,
+                    "max_tokens": 250,
                     "temperature": 0.7
                 }
             )
         if response.status_code == 200:
-            data = response.json()
-            return {"reply": data["choices"][0]["message"]["content"]}
-        else:
-            print("OpenAI API Error:", response.text)
-            return {"reply": "Sorry, the AI is currently unavailable."}
-    except Exception as e:
-        print("OpenAI Chat Exception:", str(e))
-        return {"reply": "Lỗi kết nối tới AI. Vui lòng thử lại sau."}
+            return {"reply": response.json()["choices"][0]["message"]["content"]}
+        return {"reply": "AI đang bận, vui lòng thử lại sau."}
+    except Exception:
+        return {"reply": "Lỗi kết nối AI."}
