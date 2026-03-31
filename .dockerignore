@@ -1,18 +1,53 @@
-.git
-__pycache__
+Python bytecode và cache
+
+pycache/
 *.pyc
 *.pyo
 *.pyd
-*.db
-*.sqlite3
+.pytest_cache/
+.cache/
 
-# AI stuff
+Git
+
+.git
+.gitignore
+
+Môi trường ảo và biến môi trường
+
+.env
+.venv
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+AI/Machine Learning
+
+Loại bỏ các file weights để tránh copy vào container (vì ta tải từ code hoặc dùng volume)
+
 *.pt
 *.pth
 *.h5
+*.ckpt
 dataset/
 models/
+runs/
 
-# dev files
-.env
+IDEs và OS files
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+Jupyter Notebooks
+
 .ipynb_checkpoints
+
+Build files
+
+dist/
+build/
+*.egg-info/
