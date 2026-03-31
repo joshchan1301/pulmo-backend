@@ -1,13 +1,14 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.1+cpu
+torchvision==0.17.1+cpu
+timm==0.9.16
 fastapi
 uvicorn
 python-dotenv
 httpx
 requests
-numpy
+python-multipart
+numpy<2.0.0
 pillow
-timm
-torch --index-url https://download.pytorch.org/whl/cpu
-torchvision --index-url https://download.pytorch.org/whl/cpu
 opencv-python-headless
 scikit-image
-python-multipart
