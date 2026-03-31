@@ -135,6 +135,6 @@ async def chat_with_openai(req: ChatRequest):
 if __name__ == "__main__":
     import uvicorn
     import os
-    # Lấy port từ biến môi trường của Railway
-    port = int(os.environ.get("PORT", 8000))
+    # Railway tự cấp PORT, nếu chạy máy nhà thì dùng 8000
+    port = int(os.environ.get("PORT", 8000)) 
     uvicorn.run(app, host="0.0.0.0", port=port)
