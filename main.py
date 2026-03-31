@@ -1,47 +1,68 @@
+Hugging Face's logo
+
+joshchan1301
+/
+x-ray_img_analysis_ai 
+
+like
+0
+Model card
+Files
+xet
+Community
+Settings
+x-ray_img_analysis_ai
+/
+main.py
+
+joshchan1301's picture
+joshchan1301
+Upload 5 files
+844c857
+verified
+raw
+
+Copy download link
+history
+blame
+edit
+delete
+4.12 kB
 import os
-import requests
-import torch
-import gc
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import httpx
+import gdown
 
-# Import các hàm từ file model_inference.py đã tối ưu
-import model_inference
+from model_inference import analyze_xray  # Import hàm phân tích ảnh
 
-# ================== CẤU HÌNH ==================
-MODEL_URL = "https://huggingface.co/joshchan1301/x-ray_img_analysis_ai/resolve/main/swin_best_model.pth"
-MODEL_PATH = "swin_best_model.pth"
-
-# ================== TẢI BIẾN MÔI TRƯỜNG ==================
+# Load biến môi trường
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# ================== TẢI MODEL TỪ CLOUD ==================
-def download_model():
-    if not os.path.exists(MODEL_PATH):
-        print("Đang tải model từ Hugging Face (File này nặng, vui lòng đợi)...")
-        try:
-            with requests.get(MODEL_URL, stream=True) as r:
-                r.raise_for_status()
-                with open(MODEL_PATH, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-            print("Đã tải xong model!")
-        except Exception as e:
-            print(f"Lỗi khi tải file model: {e}")
 
-# ================== KHỞI TẠO APP ==================
+def download_model():
+    model_url = "https://drive.google.com/uc?export=download&id=1VD2pXT9aDHmGwn2KiD3aSoXj5nBglVLw"
+    model_path = "swin_best_model.pth"
+    if not os.path.exists(model_path):
+        print("Downloading model from Google Drive with gdown...")
+        gdown.download(model_url, model_path, quiet=False)
+        print("Model downloaded!")
+
+
+download_model()
+
+# Khởi tạo FastAPI
 app = FastAPI(
     title="Pulmo Vision API",
-    description="Hệ thống phân loại X-quang phổi và Chatbot y tế AI",
-    version="1.1.0"
+    description="API for Lung X-ray Analysis and Pulmo AI Chatbot",
+    version="1.0.0"
 )
 
-# Cấu hình CORS để Frontend (React/Vue/HTML) có thể gọi API
+# CORS: Cho phép FE gọi API từ domain khác
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,53 +71,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Biến toàn cục để giữ instance của Analyzer
-analyzer = None
+# ========== API PHÂN TÍCH X-RAY ==========
 
-@app.on_event("startup")
-async def startup_event():
-    global analyzer
-    download_model()
-    print("Đang nạp Model vào RAM...")
-    # Gọi hàm load_model từ model_inference.py
-    analyzer = model_inference.load_model(MODEL_PATH)
-    print("Model đã sẵn sàng hoạt động!")
 
-# ================== API PHÂN TÍCH X-QUANG ==================
-@app.post("/api/analyze-xray", tags=["Chẩn đoán hình ảnh"])
+@app.post("/api/analyze-xray", tags=["X-ray Analysis"])
 async def analyze_xray_api(file: UploadFile = File(...)):
-    global analyzer
+    """
+    Nhận file ảnh X-ray, trả về nhãn dự đoán, xác suất và ảnh Grad-CAM (base64).
+    """
     try:
-        # Đọc dữ liệu ảnh gửi lên
         img_bytes = await file.read()
-        
-        # Gọi hàm predict từ model_inference.py
-        # Lưu ý: analyzer ở đây là đối tượng XRayAnalyzer đã được khởi tạo
-        result = model_inference.predict(analyzer, img_bytes)
-        
-        # Ép buộc giải phóng bộ nhớ tạm sau request
-        gc.collect()
-        
+        result = analyze_xray(img_bytes)
         return JSONResponse(content=result)
     except Exception as e:
-        print(f"Lỗi xử lý X-ray: {str(e)}")
+        print("X-ray Analysis Error:", str(e))
         return JSONResponse(
             status_code=500,
-            content={"error": f"Lỗi máy chủ nội bộ: {str(e)}"}
+            content={"error": "Internal Server Error: " + str(e)}
         )
 
-# ================== CHATBOT PULMO AI ==================
+# ========== API CHATBOT ==========
+
+
 class ChatRequest(BaseModel):
     message: str
 
-@app.post("/api/chat", tags=["Trợ lý ảo"])
-async def chat_with_openai(req: ChatRequest):
-    if not OPENAI_API_KEY:
-        return {"reply": "Lỗi: Server chưa cấu hình khóa API OpenAI."}
 
+@app.post("/api/chat", tags=["Chatbot"])
+async def chat_with_openai(req: ChatRequest):
+    """
+    Nhận tin nhắn từ user, gửi lên OpenAI ChatGPT và trả về phản hồi.
+    """
+    if not OPENAI_API_KEY:
+        return {"reply": "Lỗi: Thiếu OPENAI_API_KEY trong môi trường server."}
     try:
-        # Tăng timeout lên 60s vì đôi khi OpenAI phản hồi chậm
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient() as client:
             response = await client.post(
                 "https://api.openai.com/v1/chat/completions",
                 headers={
@@ -109,32 +118,30 @@ async def chat_with_openai(req: ChatRequest):
                         {
                             "role": "system",
                             "content": (
-                                "Bạn là Pulmo AI Assistant, một chuyên gia hỗ trợ giải thích kết quả X-quang phổi. "
-                                "Hãy trả lời bằng tiếng Việt một cách chuyên nghiệp, dễ hiểu và nhẹ nhàng. "
-                                "Giới hạn câu trả lời trong khoảng 300 tokens."
+                                "Lưu ý không trả lời quá 300 tokens."
+
+                                "Bạn là Pulmo AI Assistant, hãy trả lời các câu hỏi về X-ray phổi, sức khỏe phổi, các bệnh lý liên quan, "
+                                "và giải thích kết quả chẩn đoán AI một cách thân thiện, dễ hiểu cho người dùng Việt Nam. "
+                                "Nếu có ai đó hỏi bạn bằng tiếng Anh thì hãy trả lời họ bằng tiếng Anh."
+
                             )
                         },
-                        {"role": "user", "content": req.message}
+                        {
+                            "role": "user",
+                            "content": req.message
+                        }
                     ],
                     "max_tokens": 300,
                     "temperature": 0.7
                 }
             )
-
         if response.status_code == 200:
             data = response.json()
             return {"reply": data["choices"][0]["message"]["content"]}
         else:
-            return {"reply": f"AI đang bận một chút (Mã lỗi: {response.status_code}). Vui lòng thử lại."}
-
+            print("OpenAI API Error:", response.text)
+            return {"reply": "Sorry, the AI is currently unavailable."}
     except Exception as e:
-        print(f"Lỗi kết nối OpenAI: {str(e)}")
-        return {"reply": "Hiện tại không thể kết nối tới trợ lý ảo. Vui lòng kiểm tra internet."}
+        print("OpenAI Chat Exception:", str(e))
+        return {"reply": "Lỗi kết nối tới AI. Vui lòng thử lại sau."}
 
-
-if __name__ == "__main__":
-    import uvicorn
-    import os
-    # Railway tự cấp PORT, nếu chạy máy nhà thì dùng 8000
-    port = int(os.environ.get("PORT", 8000)) 
-    uvicorn.run(app, host="0.0.0.0", port=port)
