@@ -7,7 +7,7 @@ numpy
 pillow
 timm
 torch --index-url https://download.pytorch.org/whl/cpu
-python-multipart
-opencv-python
-torchvision
+torchvision --index-url https://download.pytorch.org/whl/cpu
+opencv-python-headless
 scikit-image
+python-multipart
