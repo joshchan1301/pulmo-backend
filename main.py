@@ -130,3 +130,11 @@ async def chat_with_openai(req: ChatRequest):
     except Exception as e:
         print(f"Lỗi kết nối OpenAI: {str(e)}")
         return {"reply": "Hiện tại không thể kết nối tới trợ lý ảo. Vui lòng kiểm tra internet."}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    # Lấy port từ biến môi trường của Railway
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
