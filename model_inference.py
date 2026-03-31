@@ -104,24 +104,21 @@ def overlay_heatmap(img_np, cam, alpha=0.40, lung_mask=None):
     overlay_img = np.clip(overlay * 255, 0, 255).astype(np.uint8)
     return overlay_img
 
-def analyze_xray(image_bytes: bytes, lung_mask=None):
-    """
-    Dự đoán bệnh phổi và trả về: label (str), probability (%), heatmap (base64 PNG)
-    """
-    model = load_model()
+def predict(model, image_bytes: bytes, lung_mask=None):
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB").resize((IMG_SIZE, IMG_SIZE))
     img_np = np.array(img) / 255.0
+
     if not is_likely_xray(img_np):
         return {
             "label": "UNKNOWN",
             "probability": 0.0,
             "heatmap": "",
-            "error": "The uploaded image does not appear to be a chest X-ray. Please upload a proper chest X-ray image."
+            "error": "The uploaded image does not appear to be a chest X-ray."
         }
 
     img_tensor = transform(img).unsqueeze(0).to(DEVICE)
     cam, pred_idx, pred_prob = gradcam_heatmap(model, img_tensor)
-    # Có thể thêm lung_mask nếu đã segment phổi ở ngoài
+
     overlay_img = overlay_heatmap(img_np, cam, alpha=0.40, lung_mask=lung_mask)
     _, buffer = cv2.imencode('.png', overlay_img)
     heatmap_b64 = base64.b64encode(buffer).decode('utf-8')
