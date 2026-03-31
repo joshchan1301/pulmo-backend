@@ -35,7 +35,7 @@ def is_likely_xray(img_np):
         return False
     return True
 
-def load_model():
+def load_model(model_path):
     global _model
     if _model is None:
         _model = create_model(
@@ -43,7 +43,7 @@ def load_model():
             pretrained=False,
             num_classes=3
         )
-        _model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
+        _model.load_state_dict(torch.load(model_path, map_location=DEVICE))
         _model.to(DEVICE).eval()
     return _model
 
