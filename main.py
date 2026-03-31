@@ -1,33 +1,3 @@
-Hugging Face's logo
-
-joshchan1301
-/
-x-ray_img_analysis_ai 
-
-like
-0
-Model card
-Files
-xet
-Community
-Settings
-x-ray_img_analysis_ai
-/
-main.py
-
-joshchan1301's picture
-joshchan1301
-Upload 5 files
-844c857
-verified
-raw
-
-Copy download link
-history
-blame
-edit
-delete
-4.12 kB
 import os
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -144,4 +114,3 @@ async def chat_with_openai(req: ChatRequest):
     except Exception as e:
         print("OpenAI Chat Exception:", str(e))
         return {"reply": "Lỗi kết nối tới AI. Vui lòng thử lại sau."}
-
