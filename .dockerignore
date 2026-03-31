@@ -1,0 +1,18 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# AI stuff
+*.pt
+*.pth
+*.h5
+dataset/
+models/
+
+# dev files
+.env
+.ipynb_checkpoints
