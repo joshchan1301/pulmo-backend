@@ -1,13 +1,10 @@
 fastapi
 uvicorn
-scikit-image
 python-dotenv
 httpx
-gdown
-torch
+requests
 numpy
 pillow
-opencv-python
 timm
-torchvision
+torch --index-url https://download.pytorch.org/whl/cpu
 python-multipart
