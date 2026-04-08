@@ -3,7 +3,6 @@ uvicorn[standard]
 python-dotenv
 httpx
 huggingface_hub
-torch
 timm
 numpy
 pillow
