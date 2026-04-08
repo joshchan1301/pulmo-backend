@@ -1,40 +1,34 @@
-Python bytecode và cache
-
-pycache/
+# Python bytecode & cache
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .pytest_cache/
 .cache/
 
-Git
-
+# Git
 .git
 .gitignore
 
-Môi trường ảo và biến môi trường
-
+# Virtual env & env files
 .env
-.venv
+.venv/
 env/
 venv/
 pip-log.txt
 pip-delete-this-directory.txt
 
-AI/Machine Learning
-
-Loại bỏ các file weights để tránh copy vào container (vì ta tải từ code hoặc dùng volume)
-
+# AI / Machine Learning (rất quan trọng)
 *.pt
 *.pth
 *.h5
 *.ckpt
 dataset/
+datasets/
 models/
 runs/
 
-IDEs và OS files
-
+# IDEs & OS
 .vscode/
 .idea/
 .DS_Store
@@ -42,12 +36,10 @@ Thumbs.db
 *.swp
 *.swo
 
-Jupyter Notebooks
+# Jupyter
+.ipynb_checkpoints/
 
-.ipynb_checkpoints
-
-Build files
-
+# Build files
 dist/
 build/
 *.egg-info/
