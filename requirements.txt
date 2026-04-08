@@ -3,14 +3,8 @@ uvicorn[standard]
 python-dotenv
 httpx
 huggingface_hub
-
-# AI (CPU only - nhẹ nhất)
-torch --index-url https://download.pytorch.org/whl/cpu
+torch
 timm
-
-# Xử lý ảnh
-numpy==1.24.3
+numpy
 pillow
-
-# Upload file
 python-multipart
