@@ -9,9 +9,15 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# Install torch CPU trước, sau đó mới install phần còn lại
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir -r requirements.txt
+# Cài torch CPU-only nhẹ nhất có thể
+RUN pip install --no-cache-dir \
+    torch==2.1.0+cpu \
+    torchvision==0.16.0+cpu \
+    --index-url https://download.pytorch.org/whl/cpu \
+    && pip cache purge
+
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip cache purge
 
 COPY . .
 
