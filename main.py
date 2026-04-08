@@ -33,7 +33,7 @@ def download_model():
             print(f"Lỗi khi tải model từ HF: {e}")
 
 # Gọi hàm tải model (tùy chọn nếu bạn đã cấu hình HF)
-# download_model()
+download_model()
 
 app = FastAPI(
     title="Pulmo Vision API",
