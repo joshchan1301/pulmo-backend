@@ -12,7 +12,7 @@ from model_inference import analyze_xray
 
 # Load biến môi trường
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Tối ưu hóa việc tải model từ Hugging Face
 def download_model():
