@@ -72,7 +72,7 @@ async def chat_with_openai(req: ChatRequest):
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                "https://pulmo-backend-production-18a1.up.railway.app/api/chat",
+                "https://api.openai.com/v1/chat/completions",
                 headers={
                     "Authorization": f"Bearer {OPENAI_API_KEY}",
                     "Content-Type": "application/json"
