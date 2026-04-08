@@ -1,25 +1,25 @@
 import os
-import httpx
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 from huggingface_hub import hf_hub_download
 
 # Import hàm inference từ file của bạn
 try:
     from model_inference import analyze_xray
 except ImportError:
-    # Để tránh crash nếu bạn chưa có file này lúc test
-    def analyze_xray(bytes): return {"result": "Model inference not found"}
+    def analyze_xray(bytes): return {"result": "Model inference module not found"}
 
 # 1. Load biến môi trường
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
-# 2. Cấu hình Prompt hệ thống (Định nghĩa Global để tránh NameError)
+# 2. Cấu hình Prompt hệ thống
 SYSTEM_INSTRUCTION = (
     "Bạn là Pulmo AI - Chuyên gia sức khỏe phổi. "
     "Quy trình trả lời: 1. Phân tích từ khóa y khoa. 2. Giải thích theo nguồn uy tín (WHO, CDC). "
@@ -40,7 +40,7 @@ def download_model():
                 repo_id=REPO_ID, 
                 filename=FILENAME, 
                 local_dir=".",
-                token=HF_TOKEN # Thêm token để tránh rate limit
+                token=HF_TOKEN
             )
             print(f"Model đã được tải về tại: {path}")
         except Exception as e:
@@ -48,14 +48,17 @@ def download_model():
 
 download_model()
 
-# 4. Khởi tạo FastAPI
+# 4. Khởi tạo Client Gemini (Sử dụng SDK mới nhất)
+# SDK sẽ tự động xử lý endpoint và quản lý kết nối
+client = genai.Client(api_key=GEMINI_API_KEY)
+
 app = FastAPI(
     title="Pulmo Vision API",
     description="API phân tích X-quang phổi và Chatbot Pulmo AI",
-    version="1.1.0"
+    version="1.2.0"
 )
 
-# 5. Cấu hình CORS (Chỉnh sửa để hoạt động tốt trên Vercel/Railway)
+# 5. Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://pulmo-vision.vercel.app", "http://localhost:3000"],
@@ -82,36 +85,26 @@ async def analyze_xray_api(file: UploadFile = File(...)):
 @app.post("/api/chat", tags=["Chatbot"])
 async def chat_with_ai(req: ChatRequest):
     if not GEMINI_API_KEY:
-        return {"reply": "Lỗi: API Key chưa được cấu hình trên Server."}
-        
-    # SỬA: Endpoint v1beta hỗ trợ tốt nhất cho gemini-1.5-flash
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
-    
-    payload = {
-        "contents": [{
-            "role": "user",
-            "parts": [{"text": f"{SYSTEM_INSTRUCTION}\n\nNgười dùng hỏi: {req.message}"}]
-        }],
-        "generationConfig": {
-            "maxOutputTokens": 400,
-            "temperature": 0.4,
-        }
-    }
+        return {"reply": "Lỗi: API Key chưa được cấu hình."}
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(url, json=payload)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if 'candidates' in data and len(data['candidates']) > 0:
-                    ai_reply = data['candidates'][0]['content']['parts'][0]['text']
-                    return {"reply": ai_reply}
-                return {"reply": "AI không tìm được câu trả lời phù hợp."}
-            else:
-                # Log lỗi chi tiết để debug trên Railway logs
-                print(f"Gemini API Error: Status {response.status_code}, Body: {response.text}")
-                return {"reply": f"Hiện tại tôi không thể trả lời (Lỗi {response.status_code})."}
+        # Sử dụng model Gemini 1.5 Flash thông qua SDK
+        # Bạn cũng có thể đổi thành 'gemini-2.0-flash' nếu tài khoản đã được hỗ trợ
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=req.message,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_INSTRUCTION,
+                temperature=0.4,
+                max_output_tokens=400,
+            )
+        )
+        
+        if response.text:
+            return {"reply": response.text}
+        return {"reply": "AI không thể đưa ra phản hồi lúc này."}
+
     except Exception as e:
-        print(f"Exception: {str(e)}")
-        return {"reply": "Lỗi hệ thống khi kết nối với trí tuệ nhân tạo."}
+        print(f"Gemini SDK Error: {str(e)}")
+        # Trả về thông báo thân thiện cho người dùng
+        return {"reply": "Hiện tại Pulmo AI đang bận xử lý dữ liệu khác. Bạn vui lòng thử lại sau nhé!"}
