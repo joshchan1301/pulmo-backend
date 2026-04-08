@@ -94,8 +94,7 @@ async def chat_with_ai(req: ChatRequest):
             config=types.GenerateContentConfig(
                 thinking_config=types.ThinkingConfig(thinking_level="low"),
                 system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.4,
-                max_output_tokens=400,
+                temperature=0.3
             )
         )
         
