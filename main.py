@@ -90,9 +90,6 @@ async def chat_with_openai(req: ChatRequest):
                     "temperature": 0.7
                 }
             )
-        if response.status_code == 200:
-            return {"reply": response.json()["choices"][0]["message"]["content"]}
-        else:
-            return {"reply": "AI đang bận, vui lòng thử lại sau."}
+        return {"reply": response.json()["choices"][0]["message"]["content"]}
     except Exception:
         return {"reply": "Lỗi kết nối AI."}
