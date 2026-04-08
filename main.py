@@ -92,6 +92,7 @@ async def chat_with_openai(req: ChatRequest):
             )
         if response.status_code == 200:
             return {"reply": response.json()["choices"][0]["message"]["content"]}
-        return {"reply": "AI đang bận, vui lòng thử lại sau."}
+        else:
+            return {"reply": "AI đang bận, vui lòng thử lại sau."}
     except Exception:
         return {"reply": "Lỗi kết nối AI."}
