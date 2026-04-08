@@ -85,7 +85,7 @@ async def chat_with_ai(req: ChatRequest):
         return {"reply": "Lỗi: API Key chưa được cấu hình trên Server."}
         
     # SỬA: Endpoint v1beta hỗ trợ tốt nhất cho gemini-1.5-flash
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
     
     payload = {
         "contents": [{
