@@ -88,12 +88,11 @@ async def chat_with_ai(req: ChatRequest):
         return {"reply": "Lỗi: API Key chưa được cấu hình."}
 
     try:
-        # Sử dụng model Gemini 1.5 Flash thông qua SDK
-        # Bạn cũng có thể đổi thành 'gemini-2.0-flash' nếu tài khoản đã được hỗ trợ
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-3.1-pro-preview",
             contents=req.message,
             config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(thinking_level="low"),
                 system_instruction=SYSTEM_INSTRUCTION,
                 temperature=0.4,
                 max_output_tokens=400,
