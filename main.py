@@ -68,29 +68,20 @@ class ChatRequest(BaseModel):
 @app.post("/api/chat", tags=["Chatbot"])
 async def chat_with_ai(req: ChatRequest):
     if not GEMINI_API_KEY:
-        print("CRITICAL: GEMINI_API_KEY is missing!")
-        return {"reply": "Lỗi: Server chưa cấu hình API Key miễn phí."}
+        return {"reply": "Lỗi: Server chưa cấu hình API Key."}
         
-    # URL API của Google Gemini
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # SỬA TẠI ĐÂY: Dùng v1beta thay vì v1 cho gemini-1.5-flash
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     
-    # Cấu hình Prompt chuyên gia y tế
-    system_instruction = (
-        "Bạn là Pulmo AI - Chuyên gia sức khỏe phổi. "
-        "Quy trình trả lời: 1. Phân tích từ khóa y khoa. 2. Giải thích theo nguồn uy tín (WHO, CDC). "
-        "3. Đề xuất hành động tiếp theo. Yêu cầu: Trả lời thân thiện, ngắn gọn dưới 150 từ. "
-        "Luôn có câu nhắc người dùng đi khám bác sĩ chuyên khoa để có kết luận chính xác."
-    )
-
+    # Payload nên bọc trong try-except riêng nếu cần
     payload = {
         "contents": [{
-            "parts": [{
-                "text": f"{system_instruction}\n\nNgười dùng hỏi: {req.message}"
-            }]
+            "role": "user", # Thêm role để chuẩn cấu trúc
+            "parts": [{"text": f"{system_instruction}\n\nNgười dùng hỏi: {req.message}"}]
         }],
         "generationConfig": {
             "maxOutputTokens": 300,
-            "temperature": 0.4, # Thấp để đảm bảo tính chính xác y khoa
+            "temperature": 0.4,
         }
     }
 
@@ -100,13 +91,14 @@ async def chat_with_ai(req: ChatRequest):
             
             if response.status_code == 200:
                 data = response.json()
-                # Trích xuất nội dung tin nhắn từ cấu trúc JSON của Gemini
-                ai_reply = data['candidates'][0]['content']['parts'][0]['text']
-                return {"reply": ai_reply}
+                # Kiểm tra xem có candidate nào không trước khi truy cập
+                if data.get('candidates'):
+                    ai_reply = data['candidates'][0]['content']['parts'][0]['text']
+                    return {"reply": ai_reply}
+                return {"reply": "AI không thể đưa ra câu trả lời phù hợp."}
             else:
+                # Log chi tiết để bạn dễ debug
                 print(f"Gemini Error {response.status_code}: {response.text}")
-                return {"reply": f"AI đang nghỉ ngơi một chút (Lỗi {response.status_code}). Thử lại sau nhé!"}
-
+                return {"reply": f"Lỗi kết nối AI (Mã: {response.status_code})."}
     except Exception as e:
-        print(f"Chat Exception: {str(e)}")
-        return {"reply": "Lỗi kết nối với trí tuệ nhân tạo. Hãy kiểm tra mạng."}
+        return {"reply": "Lỗi hệ thống khi kết nối với AI."}
