@@ -66,55 +66,47 @@ class ChatRequest(BaseModel):
     message: str
 
 @app.post("/api/chat", tags=["Chatbot"])
-async def chat_with_openai(req: ChatRequest):
-    # 1. Kiểm tra API Key có tồn tại trên server không
-    if not OPENAI_API_KEY:
-        print("Lỗi: OPENAI_API_KEY chưa được cấu hình trong Variables!")
-        return {"reply": "Lỗi hệ thống: Server chưa có API Key."}
+async def chat_with_ai(req: ChatRequest):
+    if not GEMINI_API_KEY:
+        print("CRITICAL: GEMINI_API_KEY is missing!")
+        return {"reply": "Lỗi: Server chưa cấu hình API Key miễn phí."}
         
+    # URL API của Google Gemini
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    # Cấu hình Prompt chuyên gia y tế
+    system_instruction = (
+        "Bạn là Pulmo AI - Chuyên gia sức khỏe phổi. "
+        "Quy trình trả lời: 1. Phân tích từ khóa y khoa. 2. Giải thích theo nguồn uy tín (WHO, CDC). "
+        "3. Đề xuất hành động tiếp theo. Yêu cầu: Trả lời thân thiện, ngắn gọn dưới 150 từ. "
+        "Luôn có câu nhắc người dùng đi khám bác sĩ chuyên khoa để có kết luận chính xác."
+    )
+
+    payload = {
+        "contents": [{
+            "parts": [{
+                "text": f"{system_instruction}\n\nNgười dùng hỏi: {req.message}"
+            }]
+        }],
+        "generationConfig": {
+            "maxOutputTokens": 300,
+            "temperature": 0.4, # Thấp để đảm bảo tính chính xác y khoa
+        }
+    }
+
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "gpt-4o-mini",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": (
-                                "Bạn là Pulmo AI - Chuyên gia sức khỏe phổi. "
-                                "Quy trình: 1. Phân tích từ khóa. 2. Giải thích theo nguồn uy tín (WHO, CDC). "
-                                "3. Đề xuất hành động. Trả lời dưới 150 từ, thân thiện. "
-                                "Luôn nhắc người dùng tham khảo ý kiến bác sĩ chuyên khoa."
-                            )
-                        },
-                        {"role": "user", "content": req.message}
-                    ],
-                    "max_tokens": 300, # Tăng nhẹ để tránh bị cắt chữ giữa chừng
-                    "temperature": 0.5 # Giảm xuống để câu trả lời y tế chính xác hơn
-                }
-            )
-        
-        # 2. Kiểm tra mã phản hồi từ OpenAI
-        if response.status_code == 200:
-            data = response.json()
-            # Lấy nội dung tin nhắn an toàn hơn
-            return {"reply": data["choices"][0]["message"]["content"]}
-        
-        # 3. Nếu OpenAI báo lỗi (401, 429, 500...), in log để debug
-        error_info = response.json()
-        print(f"OpenAI API Error: {response.status_code} - {error_info}")
-        
-        # Trả về thông báo lỗi cụ thể để bạn biết đường sửa
-        return {"reply": f"AI đang bận (Lỗi {response.status_code}). Vui lòng thử lại sau."}
+            response = await client.post(url, json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Trích xuất nội dung tin nhắn từ cấu trúc JSON của Gemini
+                ai_reply = data['candidates'][0]['content']['parts'][0]['text']
+                return {"reply": ai_reply}
+            else:
+                print(f"Gemini Error {response.status_code}: {response.text}")
+                return {"reply": f"AI đang nghỉ ngơi một chút (Lỗi {response.status_code}). Thử lại sau nhé!"}
 
-    except httpx.ReadTimeout:
-        return {"reply": "Yêu cầu xử lý quá lâu, vui lòng thử lại."}
     except Exception as e:
-        # In lỗi hệ thống ra console của Railway
-        print(f"Exception tại chat_with_openai: {str(e)}")
-        return {"reply": "Lỗi kết nối máy chủ AI. Vui lòng kiểm tra lại mạng."}
+        print(f"Chat Exception: {str(e)}")
+        return {"reply": "Lỗi kết nối với trí tuệ nhân tạo. Hãy kiểm tra mạng."}
