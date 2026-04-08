@@ -1,13 +1,16 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 httpx
 huggingface_hub
+
+# AI (CPU only - nhẹ nhất)
 torch --index-url https://download.pytorch.org/whl/cpu
-torchvision --index-url https://download.pytorch.org/whl/cpu
+timm
+
+# Xử lý ảnh
 numpy==1.24.3
 pillow
-opencv-python-headless
-timm
+
+# Upload file
 python-multipart
-scikit-image
