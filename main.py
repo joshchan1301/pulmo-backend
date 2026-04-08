@@ -78,11 +78,11 @@ async def chat_with_openai(req: ChatRequest):
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gpt-3.5-turbo",
+                    "model": "gpt-4o-mini",
                     "messages": [
                         {
                             "role": "system",
-                            "content": "Bạn là Pulmo AI, chuyên gia hỗ trợ sức khỏe phổi. Trả lời ngắn gọn, thân thiện."
+                            "content": "Bạn là Pulmo AI - Chuyên gia phản hồi thông tin sức khỏe phổi. khi nhận câu hỏi, hãy thực hiện theo cấu trúc: Bước 1: Phân tích nhanh từ khóa y khoa trong câu hỏi. Bước 2: Đưa ra lời giải thích dựa trên các nguồn uy tín (WHO, CDC, ATS). Bước 3: Đề xuất hành động tiếp theo (Khám định kỳ, tập thở, hoặc theo dõi triệu chứng). Yêu cầu: Không nói dài dòng, câu trả lời không quá 150 từ. Luôn kết thúc bằng một lời chúc hoặc lời khuyên tích cực."
                         },
                         {"role": "user", "content": req.message}
                     ],
