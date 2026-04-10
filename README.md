@@ -16,7 +16,7 @@ Additionally, the system generates **Grad-CAM heatmaps** to explain the model’
 - 🔥 **Grad-CAM visualization** → highlights the lung regions the model focuses on.
 - 🧠 **Swin Transformer backbone** → state-of-the-art computer vision architecture.
 - 🌐 **FastAPI backend** → easy to deploy (Vercel, Render, Railway…).
-- 🤖 **GPT-powered chatbot** (OpenAI API) → explains results in a user-friendly way.
+- 🤖 **Gemini preview-model chatbot** (Google AI Studio) → explains results in a user-friendly way.
 
 ---
 
