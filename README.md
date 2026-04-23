@@ -121,7 +121,7 @@ Do your own =)))
 
 - **Python, FastAPI, httpx** – API server
 - **PyTorch, timm, torchvision** – Deep learning model
-- **OpenAI API** – Chatbot
+- **Gemini preview-model chatbot** – Chatbot
 - **Grad-CAM** – Explainable AI
 
 ---
